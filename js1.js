@@ -215,6 +215,28 @@ function initVideo() {
     };
 }
 
+ /* // ПОКАЗАТЬ ВИДЕО ЧЕРЕЗ 10 СЕКУНД (ТЕСТИРОВАНИЕ)
+ setTimeout(() => {
+    const timerContainer = document.querySelector('.timer-container');
+    const newYearMessage = document.getElementById('newYearMessage');
+    const videoContainer = document.getElementById('videoContainer');
+    const imageContainer = document.querySelector('.image-container');
+    
+    timerContainer.style.display = 'none';
+    newYearMessage.style.display = 'block';
+    videoContainer.classList.add('show');
+    videoContainer.style.display = 'block';
+    
+    if (imageContainer) {
+        imageContainer.style.marginTop = '40px';
+        imageContainer.style.marginBottom = '60px';
+    }
+    
+    playVideoIfLoaded();
+    increaseSnowflakes();
+}, 10000); // 10000 мс = 10 секунд
+*/
+
 /* ===== ИЗОБРАЖЕНИЕ ===== */
 function initImage() {
     const imgElement = document.getElementById('bottomImage');
