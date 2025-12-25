@@ -1,0 +1,346 @@
+JS:
+/**
+ * НОВОГОДНИЙ САЙТ С ТАЙМЕРОМ
+ * Упрощенная версия: белый текст, минимум элементов
+ * Картинка от края до края в формате PNG
+ * Снег на основе GSAP
+ */
+
+// ===== ФУНКЦИИ ДЛЯ СНЕГА (GSAP) =====
+function initSnow() {
+    console.log("Инициализация снега с GSAP...");
+    
+    const snowContainer = document.getElementById("snow-container");
+    
+    // Функция для генерации случайного числа в диапазоне
+    const randomInRange = (max, min) => Math.floor(Math.random() * (max - min)) + min;
+    
+    // Функция создания снежинки
+    const createSnowflake = () => {
+        const snowflake = document.createElement("div");
+        snowflake.className = "snowflake";
+        
+        // Случайная горизонтальная позиция
+        const pos = randomInRange(100.5, 0);
+        snowflake.style.left = `${pos}%`;
+        
+        // Случайный размер снежинки (от 4px до 12px)
+        const size = randomInRange(12, 4);
+        snowflake.style.height = snowflake.style.width = `${size}px`;
+        
+        // Случайная прозрачность (от 0.8 до 1)
+        const opacity = randomInRange(10, 8) / 10; // 0.8 - 1.0
+        gsap.set(snowflake, { opacity });
+        
+        // Случайные параметры анимации
+        const delay = randomInRange(10, 0);
+        const speed = randomInRange(17, 12);
+        const blurVal = randomInRange(4, 1);
+        
+        // Создаем путь для кривой Безье (зигзагообразное падение)
+        const path = () => [
+            { x: randomInRange(150, -150), y: randomInRange(150, -150) },
+            { x: randomInRange(150, -150), y: randomInRange(150, -150) },
+            { x: randomInRange(150, -150), y: randomInRange(150, -150) },
+            { x: randomInRange(150, -150), y: randomInRange(150, -150) }
+        ];
+        
+        // Анимация снежинки с GSAP
+        gsap.to(snowflake, {
+            y: 1520, // Движение вниз
+            delay,
+            duration: speed,
+            filter: `blur(${blurVal}px)`,
+            repeat: -1, // Бесконечное повторение
+            bezier: {
+                type: "soft",
+                values: path(),
+                autoRotate: true
+            },
+            ease: "power1.inOut"
+        });
+        
+        return snowflake;
+    };
+    
+    // Создаем снежинки (200 штук)
+    for (let i = 0; i < 200; i++) {
+        const snowflake = createSnowflake();
+        snowContainer.appendChild(snowflake);
+    }
+    
+    console.log("Снег создан с использованием GSAP!");
+}
+
+// ===== ЗАПРЕТ МАСШТАБИРОВАНИЯ =====
+function disableZoom() {
+    // Отключаем масштабирование колесиком мыши
+    document.addEventListener('wheel', function(e) {
+        if (e.ctrlKey) {
+            e.preventDefault();
+            return false;
+        }
+    }, { passive: false });
+    
+    // Отключаем масштабирование жестами на мобильных
+    document.addEventListener('touchmove', function(e) {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+            return false;
+        }
+    }, { passive: false });
+    
+    // Отключаем комбинации клавиш для масштабирования
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=')) || 
+            (e.ctrlKey && e.key === '0')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+}
+
+// ===== ОСНОВНОЙ ТАЙМЕР =====
+function initTimer() {
+    console.log("Инициализация таймера...");
+    
+    // Устанавливаем целевую дату: 31 декабря 2025 года, 21:00
+    const targetDate = new Date('December 31, 2025 21:00:00').getTime();
+    
+    // Получаем элементы DOM
+    const daysElement = document.getElementById('days');
+    const hoursElement = document.getElementById('hours');
+    const minutesElement = document.getElementById('minutes');
+    const secondsElement = document.getElementById('seconds');
+    const timerContainer = document.querySelector('.timer-container');
+    const newYearMessage = document.getElementById('newYearMessage');
+    const videoContainer = document.getElementById('videoContainer');
+    
+    // Переменная для хранения интервала таймера
+    let timerInterval;
+    
+    // Функция обновления таймера
+    function updateTimer() {
+        const now = new Date().getTime();
+        const timeLeft = targetDate - now;
+        
+        // Если время истекло
+        if (timeLeft < 0) {
+            clearInterval(timerInterval);
+            
+            // Скрываем таймер
+            timerContainer.style.display = 'none';
+            
+            // Показываем новогоднее поздравление
+            newYearMessage.style.display = 'block';
+            
+            // Показываем видео
+            videoContainer.classList.add('show');
+            videoContainer.style.display = 'block';
+            
+            // Воспроизводим видео, если оно загружено
+            playVideoIfLoaded();
+            
+            // Увеличиваем количество снежинок для праздничного эффекта
+            increaseSnowflakes();
+            
+            return;
+        }
+        
+        // Вычисляем дни, часы, минуты и секунды
+        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        
+        // Отображаем значения таймера
+        daysElement.textContent = days.toString().padStart(2, '0');
+        hoursElement.textContent = hours.toString().padStart(2, '0');
+        minutesElement.textContent = minutes.toString().padStart(2, '0');
+        secondsElement.textContent = seconds.toString().padStart(2, '0');
+    }
+    
+    // Запускаем таймер
+    timerInterval = setInterval(updateTimer, 1000);
+    updateTimer(); // Первоначальный вызов
+    
+    return timerInterval;
+}
+
+// ===== УВЕЛИЧЕНИЕ СНЕЖИНОК ПОСЛЕ НОВОГО ГОДА =====
+function increaseSnowflakes() {
+    const snowContainer = document.getElementById("snow-container");
+    
+    // Функция для генерации случайного числа в диапазоне
+    const randomInRange = (max, min) => Math.floor(Math.random() * (max - min)) + min;
+    
+    // Создаем дополнительные снежинки (100 штук)
+    for (let i = 0; i < 100; i++) {
+        const snowflake = document.createElement("div");
+        snowflake.className = "snowflake";
+        
+        // Случайная горизонтальная позиция
+        const pos = randomInRange(100.5, 0);
+        snowflake.style.left = `${pos}%`;
+        
+        // Случайный размер снежинки (от 6px до 16px)
+        const size = randomInRange(16, 6);
+        snowflake.style.height = snowflake.style.width = `${size}px`;
+        
+        // Случайная прозрачность (от 0.7 до 1)
+        const opacity = randomInRange(10, 7) / 10;
+        gsap.set(snowflake, { opacity });
+        
+        // Случайные параметры анимации (более медленное падение для праздничного эффекта)
+        const delay = randomInRange(15, 0);
+        const speed = randomInRange(25, 15);
+        const blurVal = randomInRange(5, 2);
+        
+        // Создаем путь для кривой Безье
+        const path = () => [
+            { x: randomInRange(200, -200), y: randomInRange(200, -200) },
+            { x: randomInRange(200, -200), y: randomInRange(200, -200) },
+            { x: randomInRange(200, -200), y: randomInRange(200, -200) },
+            { x: randomInRange(200, -200), y: randomInRange(200, -200) }
+        ];
+        
+        // Анимация снежинки с GSAP
+        gsap.to(snowflake, {
+            y: 1520,
+            delay,
+            duration: speed,
+            filter: `blur(${blurVal}px)`,
+            repeat: -1,
+            bezier: {
+                type: "soft",
+                values: path(),
+                autoRotate: true
+            },
+            ease: "power1.inOut"
+        });
+        
+        snowContainer.appendChild(snowflake);
+    }
+    
+    console.log("Добавлены дополнительные снежинки для праздника!");
+}
+
+// ===== ВИДЕО =====
+function initVideo() {
+    console.log("Инициализация видео...");
+    
+    const videoName = "video1.mp4";
+    const videoPlaceholder = document.querySelector('.video-placeholder');
+    
+    // Проверяем наличие видеофайла
+    checkFileExists(videoName, function(exists) {
+        if (exists) {
+            console.log("Видео найдено: " + videoName);
+            
+            // Создаем элемент video
+            const videoElement = document.createElement('video');
+            videoElement.controls = true;
+            videoElement.autoplay = true;
+            videoElement.loop = true;
+            videoElement.muted = false;
+            videoElement.style.width = '100%';
+            videoElement.style.height = '100%';
+            videoElement.style.objectFit = 'cover';
+            videoElement.style.borderRadius = '15px';
+            
+            // Добавляем источник видео
+            const sourceElement = document.createElement('source');
+            sourceElement.src = videoName;
+            sourceElement.type = 'video/mp4';
+            
+            videoElement.appendChild(sourceElement);
+            
+            // Заменяем placeholder на видео
+            videoPlaceholder.innerHTML = '';
+            videoPlaceholder.appendChild(videoElement);
+            
+            // Функция для воспроизведения видео
+            window.playVideoIfLoaded = function() {
+                if (videoElement.paused) {
+                    videoElement.play().catch(e => {
+                        console.warn("Автовоспроизведение заблокировано:", e);
+                        videoElement.controls = true;
+                    });
+                }
+            };
+            
+        } else {
+            console.warn("Видео не найдено: " + videoName);
+            
+            // Оставляем placeholder
+            window.playVideoIfLoaded = function() {
+                console.log("Видео не загружено");
+            };
+        }
+    });
+}
+
+// ===== ИЗОБРАЖЕНИЕ (PNG ФОРМАТ) =====
+function initImage() {
+    console.log("Инициализация изображения (PNG)...");
+    
+    const imgName = "image1.png";
+    const imgElement = document.getElementById('bottomImage');
+    
+    // Сначала пробуем PNG
+    checkFileExists(imgName, function(pngExists) {
+        if (pngExists) {
+            console.log("Изображение найдено (PNG): " + imgName);
+            imgElement.src = imgName;
+        } else {
+            // Если PNG не найден, пробуем JPG
+            console.log("PNG не найден, пробуем JPG...");
+            const jpgName = "image1.jpg";
+            checkFileExists(jpgName, function(jpgExists) {
+                if (jpgExists) {
+                    console.log("Изображение найдено (JPG): " + jpgName);
+                    imgElement.src = jpgName;
+                } else {
+                    console.warn("Изображение не найдено ни в PNG, ни в JPG формате");
+                }
+            });
+        }
+    });
+}
+
+// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+function checkFileExists(url, callback) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('HEAD', url, true);
+    xhr.onreadystatechange = function() {
+        if (this.readyState === 4) {
+            callback(this.status === 200);
+        }
+    };
+    xhr.send();
+}
+
+// ===== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ =====
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Загрузка сайта...");
+    
+    // 1. Запрещаем масштабирование
+    disableZoom();
+    
+    // 2. Инициализируем снег с GSAP
+    initSnow();
+    
+    // 3. Инициализируем видео и изображение
+    initVideo();
+    initImage();
+    
+    // 4. Инициализируем таймер
+    initTimer();
+    
+    console.log("Сайт загружен!");
+});
+
+// Обработка ошибок
+window.addEventListener('error', function(e) {
+    console.error("Ошибка на странице:", e.message);
+});
