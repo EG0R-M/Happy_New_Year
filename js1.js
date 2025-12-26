@@ -76,6 +76,45 @@ function disableZoom() {
     });
 }
 
+/* ===== ФОНОВАЯ МУЗЫКА ===== */
+function initBackgroundMusic() {
+    const music = document.getElementById('backgroundMusic');
+    
+    if (!music) {
+        console.log("Аудио элемент не найден");
+        return;
+    }
+    
+    music.volume = 0.5;
+    
+    const playMusic = () => {
+        music.play().catch(e => {
+            console.log("Автозапуск музыки заблокирован. Кликните по странице.");
+        });
+    };
+    
+    playMusic();
+    
+    document.addEventListener('click', function startMusicOnClick() {
+        playMusic();
+        document.removeEventListener('click', startMusicOnClick);
+    }, { once: true });
+    
+    window.fadeOutMusic = function() {
+        let volume = music.volume;
+        const fadeInterval = setInterval(() => {
+            if (volume > 0) {
+                volume -= 0.05;
+                if (volume < 0) volume = 0;
+                music.volume = volume;
+            } else {
+                clearInterval(fadeInterval);
+                music.pause();
+            }
+        }, 100);
+    };
+}
+
 /* ===== ОСНОВНОЙ ТАЙМЕР ===== */
 function initTimer() {
     const targetDate = new Date('December 31, 2025 21:00:00').getTime();
@@ -207,12 +246,38 @@ function initVideo() {
     videoPlaceholder.appendChild(videoElement);
     
     window.playVideoIfLoaded = function() {
+        if (window.fadeOutMusic) {
+            window.fadeOutMusic();
+        }
+        
         if (videoElement.paused) {
             videoElement.play().catch(e => {
                 videoElement.controls = true;
             });
         }
     };
+    
+    /* // ПОКАЗАТЬ ВИДЕО ЧЕРЕЗ 10 СЕКУНД (ТЕСТИРОВАНИЕ)
+    setTimeout(() => {
+        const timerContainer = document.querySelector('.timer-container');
+        const newYearMessage = document.getElementById('newYearMessage');
+        const videoContainer = document.getElementById('videoContainer');
+        const imageContainer = document.querySelector('.image-container');
+        
+        timerContainer.style.display = 'none';
+        newYearMessage.style.display = 'block';
+        videoContainer.classList.add('show');
+        videoContainer.style.display = 'block';
+        
+        if (imageContainer) {
+            imageContainer.style.marginTop = '40px';
+            imageContainer.style.marginBottom = '60px';
+        }
+        
+        playVideoIfLoaded();
+        increaseSnowflakes();
+    }, 10000); // 10000 мс = 10 секунд
+    */
 }
 
 /* ===== ИЗОБРАЖЕНИЕ ===== */
@@ -233,6 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initVideo();
     initImage();
     initTimer();
+    initBackgroundMusic();
 });
 
 window.addEventListener('error', function(e) {
